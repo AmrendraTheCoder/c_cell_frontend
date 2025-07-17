@@ -292,16 +292,24 @@ class _ModernLoadingIndicatorState extends State<ModernLoadingIndicator>
     _rotationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat();
+    );
 
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _rotationController.repeat();
+        _pulseController.repeat(reverse: true);
+      }
+    });
   }
 
   @override
@@ -609,10 +617,17 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat();
+    );
     _animation = Tween<double>(begin: -1, end: 2).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _controller.repeat();
+      }
+    });
   }
 
   @override

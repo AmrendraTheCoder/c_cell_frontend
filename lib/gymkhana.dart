@@ -8,370 +8,448 @@ import 'package:login_page/sports.dart';
 import 'package:login_page/technology.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class GymkhanaPage extends StatelessWidget {
+class GymkhanaPage extends StatefulWidget {
   const GymkhanaPage({super.key});
 
   @override
+  State<GymkhanaPage> createState() => _GymkhanaPageState();
+}
+
+class _GymkhanaPageState extends State<GymkhanaPage> 
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width >= 1024;
+    final isTablet = size.width >= 768 && size.width < 1024;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF001219),
+      backgroundColor: const Color(0xFF0A0E27),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'STUDENT GYMKHANA',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 35.sp,
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
+          physics: const BouncingScrollPhysics(),
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 48 : (isTablet ? 32 : 16),
+                  vertical: 24,
                 ),
-              ),
-              SizedBox(height: 15.h),
-              Text(
-                "The Students' Gymkhana is the official student-governing body of The LNMIIT, Jaipur, dedicated to representing and advancing the interests of the student community. Established in 2006, it plays a vital role in nurturing leadership, promoting dialogue, and building a participatory campus culture. Under the guidance of the Institute's Director, the Gymkhana acts as a bridge between the administration and the students, enabling communication, decision-making, and policy participation that directly impacts student life.",
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 10.sp),
-              ),
-              SizedBox(height: 30.h),
-              presidentTile(
-                "Mr. Vaibhav Khamesra",
-                "President",
-                "7023659757",
-                "gym.president@lnmiit.ac.in",
-              ),
-              presidentTile(
-                "Mr. Chirag Mehta",
-                "Vice-President",
-                "",
-                "gym.vicepresident@lnmiit.ac.in",
-              ),
-              presidentTile(
-                "Mr. Jalaj Rastogi",
-                "Finance Convener",
-                "8077054850",
-                "gym.financeconvenor@lnmiit.ac.in",
-              ),
-              SizedBox(height: 20.h),
-              buildSectionTitle("PRESIDENTIAL COUNCIL"),
-              SizedBox(height: 16.h),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 2,
-                crossAxisSpacing: 16.w,
-                mainAxisSpacing: 16.h,
-                childAspectRatio: 0.75,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  squareCard(
-                    "Cultural Council",
-                    'assets/images/ccell_logo.png',
-                    context,
-                    const CulturalCouncil(),
-                  ),
-                  squareCard(
-                    "Science & Technology Council",
-                    'assets/images/tech_logo.jpg',
-                    context,
-                    const TechnologyCouncil(),
-                  ),
-                  squareCard(
-                    "Sports Council",
-                    'assets/images/sports_logo.jpg',
-                    context,
-                    const SportsCouncil(),
-                  ),
-                  squareCard(
-                    "COSHA Committee",
-                    "assets/images/cosha_logo.jpg",
-                    context,
-                    COSHAScreen(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 40.h),
-              Text(
-                'STUDENT FESTS',
-                style: GoogleFonts.poppins(
-                  color: Color.fromRGBO(255, 255, 255, 1),
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 15.h),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  squareCard(
-                    "Desportivos",
-                    "assets/images/despo/despo_logo.jpeg",
-                    context,
-                    const StudentEventScreen(
-                      imageUrl: "assets/images/despo/despo_logo.jpeg",
-                      description:
-                          "Desportivos is the flagship annual sports festival of LNMIIT, proudly hosted by the Sports Council. Recognized as one of the largest collegiate sports fests in Rajasthan, it brings together student-athletes to compete, connect, and celebrate the spirit of the game.\nThis three-day mega event unites more than just teams—it fosters a shared culture of sportsmanship, discipline, and unity. With a diverse lineup of indoor and outdoor sports, including cricket, football, basketball, volleyball, badminton, table tennis, chess, carrom, and more, Desportivos offers a thrilling arena for both competitive glory and personal growth.\nWhat sets Desportivos apart is the unmatched energy on and off the field—where every match is met with roaring crowds, intense rivalries, and moments that become campus legends. It’s a space where adrenaline, ambition, and athleticism converge to create memories that last far beyond the final whistle.\nBehind the seamless execution is a dedicated student organizing team that ensures everything runs like clockwork—from fixtures to fair play.",
-                      festHeads: [
-                        {
-                          "name": "Chetan Sharma",
-                          "phone": "9761194540",
-                          "email": "22uec033@lnmiit.ac.in",
-                        },
-                        {
-                          "name": "Sanchay Goel",
-                          "phone": "9997479600",
-                          "email": "22ucs180@lnmiit.ac.in",
-                        },
-                      ],
-                      galleryImages: [
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/despo/despo1.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/despo/despo2.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/despo/despo3.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/despo/despo4.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/despo/despo5.jpg",
-                      ],
-                      instaUrl: 'https://www.instagram.com/desportivos.lnmiit/',
-                      emailUrl: "desportivos@lnmiit.ac.in",
-                      youtubeUrl:
-                          "https://www.youtube.com/@desportivoslnmiit2733",
-                      linkedinUrl:
-                          "https://www.linkedin.com/in/desportivos-the-lnmiit-jaipur-ab9184250/?originalSubdomain=in",
-                      facebookUrl:
-                          "https://www.facebook.com/Desportivos.LNMIIT/",
-                      xUrl: "https://x.com/desportivoslnm",
-                      label: "",
-                    ),
-                  ),
-                  squareCard(
-                    "Plinth",
-                    "assets/images/plinth/plinth_logo.jpg",
-                    context,
-                    const StudentEventScreen(
-                      imageUrl: "assets/images/plinth/plinth_logo.jpg",
-                      description:
-                          "Plinth is the annual techno-management fest of LNMIIT Jaipur, turning the campus into a vibrant hub of innovation, competition, and intellectual exploration.Plinth attracts students, creators, and tech enthusiasts from across the country who come together to push the boundaries of what’s possible.\nPlinth embraces the cutting edge of technology, diving deep into areas like robotics, artificial intelligence, cybersecurity, and beyond. The renowned Talk Series features distinguished personalities from the world of tech who share groundbreaking ideas, industry insights, and bold visions for the future. Alongside these, Plinth offers immersive workshops, startup showcases, strategic management contests, and even literary events—ensuring that there's something for every curious mind.\nDriven by LNMIIT’s dynamic student community, Plinth 2025 creates an atmosphere where innovation thrives, collaboration flourishes, and passion for technology takes center stage. As a space where you don’t just witness the future—you build it—Plinth invites you to code, create, and celebrate in an unforgettable three-day experience.",
-                      festHeads: [
-                        {
-                          "name": "Rajat Sharma",
-                          "phone": "8972192855",
-                          "email": "22uec106@lnmiit.ac.in",
-                        },
-                        {
-                          "name": "Yug Agarwal",
-                          "phone": "8299099721",
-                          "email": "22ucs233@lnmiit.ac.in",
-                        },
-                      ],
-                      galleryImages: [
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/plinth/plinth3.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/plinth/plinth4.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/plinth/plinth5.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/plinth/plinth1.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/plinth/plinth2.jpg",
-                      ],
-                      instaUrl: 'https://www.instagram.com/plinth.lnmiit/',
-                      emailUrl: "plinth@lnmiit.ac.in",
-                      youtubeUrl: "http://www.youtube.com/@PlinthLNMIITJaipur",
-                      linkedinUrl: "",
-                      facebookUrl: "https://www.facebook.com/Plinth.LNMIIT/",
-                      xUrl: "https://x.com/plinthlnmiit",
-                      label: "",
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              squareCard(
-                "Vivacity",
-                'assets/images/viva/viva_logo.png',
-                context,
-                const StudentEventScreen(
-                  imageUrl: "assets/images/viva/viva_logo.png",
-                  description:
-                      "Since its inception in 2007, Vivacity has grown into a phenomenon that transcends the definition of a college fest. It’s not just an event—it’s an electrifying celebration of youth, creativity, and cultural spirit that brings the entire campus to life.\nAcross three unforgettable days, Vivacity transforms LNMIIT into a stage where dancers, musicians, artists, dramatists, fashionistas, and performers converge to showcase their brilliance. \nThe fest thrives on its diverse line-up: from street plays and band battles to open mics, poetry slams, and ramp walks, every corner of campus echoes with excitement. \nSpearheaded by an incredibly passionate student team, Vivacity continues to set new benchmarks every year. What makes it unforgettable is not just the scale—but the soul behind it.",
-                  festHeads: [
-                    {
-                      "name": "Ayush Dhanesha",
-                      "phone": "9998523792",
-                      "email": "22ucs065@lnmiit.ac.in",
-                    },
-                    {
-                      "name": "Shubhanshu Singhal",
-                      "phone": "8949024851",
-                      "email": "22ucc101@lnmiit.ac.in",
-                    },
+                child: Column(
+                  children: [
+                    _buildHeroSection(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 64 : 48),
+                    _buildLeadershipSection(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 64 : 48),
+                    _buildCouncilsSection(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 64 : 48),
+                    _buildStudentEventsSection(isDesktop, isTablet),
+                    SizedBox(height: 40),
                   ],
-                  galleryImages: [
-                    "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/viva/viva1.jpg",
-                    "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/viva/viva2.jpg",
-                    "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/viva/viva3.jpg",
-                    "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/viva/viva4.jpg",
-                    "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/viva/viva5.jpg",
-                  ],
-                  instaUrl: 'https://www.instagram.com/vivacity_lnmiit/',
-                  emailUrl: "vivacity@lnmiit.ac.in",
-                  youtubeUrl: "https://www.youtube.com/@VivacityLNMIIT",
-                  linkedinUrl:
-                      "https://www.linkedin.com/company/vivacity-lnmiit/?originalSubdomain=in",
-                  facebookUrl: "",
-                  xUrl: "",
-                  label: "",
                 ),
               ),
-              SizedBox(height: 40.h),
-              Text(
-                'STUDENT EVENTS',
-                style: GoogleFonts.poppins(
-                  color: Color.fromRGBO(255, 255, 255, 1),
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 15.h),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  squareCard(
-                    "TEDX LNMIIT",
-                    'assets/images/ted_logo.jpg',
-                    context,
-                    const StudentEventScreen(
-                      imageUrl: "assets/images/ted_logo.jpg",
-                      description:
-                          "TEDxLNMIIT brings the global spirit of TED’s “ideas worth spreading” right to the heart of our campus—fostering a culture of curiosity, creativity, and bold thinking. Independently organized but deeply rooted in TED’s global vision, TEDxLNMIIT is where powerful voices and transformative ideas come alive.\nSpanning fields like technology, science, art, and education, TEDxLNMIIT welcomes speakers from diverse walks of life to ignite dialogue, question conventions, and provoke thought. Every edition centers around a unifying theme that encourages the community to look deeper, think differently, and reimagine the familiar.\nIt’s more than a stage—it’s a movement within the institute that empowers individuals to share ideas that matter. Through powerful talks and meaningful conversations, TEDxLNMIIT sparks a ripple of innovation and introspection, leaving lasting impressions on everyone who attends.",
-                      festHeads: [
-                        {
-                          "name": "Abdul Hadi Siddiqui",
-                          "phone": "8107210700",
-                          "email": "23ucs503@lnmiit.ac.in",
-                        },
-                        {
-                          "name": "Anshika Agrawal",
-                          "phone": "8826256810",
-                          "email": "23ucc516@lnmiit.ac.in",
-                        },
-                        {
-                          "name": "Parv Khandelwal",
-                          "phone": "8306595368",
-                          "email": "23uec588@lnmiit.ac.in",
-                        },
-                        {
-                          "name": "Vihaan Malik",
-                          "phone": "8445893879",
-                          "email": "23ume553@lnmiit.ac.in",
-                        },
-                      ],
-                      galleryImages: [
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/ted/ted1.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/ted/ted2.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/ted/ted3.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/ted/ted4.jpg",
-                        "https://raw.githubusercontent.com/ccell2026/ccell/refs/heads/master/assets/images/ted/ted5.jpg",
-                      ],
-                      instaUrl: 'https://www.instagram.com/tedxlnmiit/',
-                      emailUrl: "",
-                      youtubeUrl: "http://www.youtube.com/@TEDxLNMIIT",
-                      linkedinUrl: "",
-                      facebookUrl: "https://www.facebook.com/TEDxLNMIIT/",
-                      xUrl: "",
-                      label: "TEDX LNMIIT",
-                    ),
-                  ),
-                  squareCard(
-                    "E-Summit",
-                    'assets/images/esummit_logo.jpg',
-                    context,
-                    const StudentEventScreen(
-                      imageUrl: "assets/images/esummit_logo.jpg",
-                      description:
-                          "E-Summit is LNMIIT Jaipur’s flagship celebration of entrepreneurship, innovation, and enterprise, bringing together some of the brightest young minds from across India. Designed to empower the next generation of changemakers, the summit sparks powerful conversations between budding entrepreneurs, venture capitalists, founders, and industry veterans.\nMore than just a startup conclave, E-Summit is a launchpad where ideas evolve into ventures, and raw potential meets expert mentorship. At the heart of E-Summit lies a mission to nurture entrepreneurial talent within the student community and inspire participants to tackle real-world problems through innovation. With top institutes and emerging startups in attendance, the event offers unmatched networking opportunities, bridging the academic, corporate, and startup ecosystems./nWhether you're a founder in the making, a problem-solver with an idea, or someone curious about the startup world, E-Summit  promises a platform to learn, connect, and lead. ",
-                      festHeads: [],
-                      galleryImages: [],
-                      instaUrl: '',
-                      emailUrl: "",
-                      youtubeUrl: "",
-                      linkedinUrl: "",
-                      facebookUrl: "",
-                      xUrl: "",
-                      label: "E-Summit",
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20.h),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-Widget squareCard(
-  String label,
-  String imageUrl,
-  BuildContext context,
-  Widget targetScreen,
-) {
-  ImageProvider imageProvider;
-  try {
-    imageProvider = AssetImage(imageUrl);
-  } catch (e) {
-    imageProvider = const AssetImage('assets/images/ccell_logo.png');
+  Widget _buildHeroSection(bool isDesktop, bool isTablet) {
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 48 : 32),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1E40AF),
+            Color(0xFF3B82F6),
+            Color(0xFF60A5FA),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3B82F6).withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.account_balance_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'STUDENT GYMKHANA',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: isDesktop ? 42 : (isTablet ? 36 : 28),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            "The Students' Gymkhana is the official student-governing body of The LNMIIT, Jaipur, dedicated to representing and advancing the interests of the student community. Established in 2006, it plays a vital role in nurturing leadership, promoting dialogue, and building a participatory campus culture.",
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: isDesktop ? 16 : 14,
+              height: 1.6,
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
+  Widget _buildLeadershipSection(bool isDesktop, bool isTablet) {
+    return Column(
+      children: [
+        _buildSectionHeader('LEADERSHIP TEAM', Icons.person_rounded, isDesktop),
+        const SizedBox(height: 32),
+        Column(
+          children: [
+            enhancedPresidentTile(
+              "Mr. Vaibhav Khamesra",
+              "President",
+              "7023659757",
+              "gym.president@lnmiit.ac.in",
+              const Color(0xFFEF4444),
+              isDesktop,
+            ),
+            const SizedBox(height: 16),
+            enhancedPresidentTile(
+              "Mr. Chirag Mehta",
+              "Vice-President",
+              "",
+              "gym.vicepresident@lnmiit.ac.in",
+              const Color(0xFF3B82F6),
+              isDesktop,
+            ),
+            const SizedBox(height: 16),
+            enhancedPresidentTile(
+              "Mr. Jalaj Rastogi",
+              "Finance Convener",
+              "8077054850",
+              "gym.financeconvenor@lnmiit.ac.in",
+              const Color(0xFF10B981),
+              isDesktop,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCouncilsSection(bool isDesktop, bool isTablet) {
+    return Column(
+      children: [
+        _buildSectionHeader('PRESIDENTIAL COUNCIL', Icons.groups_rounded, isDesktop),
+        const SizedBox(height: 32),
+        _buildResponsiveGrid(
+          isDesktop: isDesktop,
+          isTablet: isTablet,
+          children: [
+            enhancedSquareCard(
+              "Cultural Council",
+              'assets/images/ccell_logo.png',
+              const CulturalCouncil(),
+              const Color(0xFFEC4899),
+              "Creativity & Arts",
+              isDesktop,
+            ),
+            enhancedSquareCard(
+              "Science & Technology Council",
+              'assets/images/tech_logo.jpg',
+              const TechnologyCouncil(),
+              const Color(0xFF8B5CF6),
+              "Innovation & Tech",
+              isDesktop,
+            ),
+            enhancedSquareCard(
+              "Sports Council",
+              'assets/images/sports_logo.jpg',
+              const SportsCouncil(),
+              const Color(0xFF06B6D4),
+              "Athletics & Wellness",
+              isDesktop,
+            ),
+            enhancedSquareCard(
+              "COSHA Committee",
+              "assets/images/cosha_logo.jpg",
+              COSHAScreen(),
+              const Color(0xFFF59E0B),
+              "Student Welfare",
+              isDesktop,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudentEventsSection(bool isDesktop, bool isTablet) {
+    return Column(
+      children: [
+        _buildSectionHeader('STUDENT FESTIVALS', Icons.celebration_rounded, isDesktop),
+        const SizedBox(height: 32),
+        _buildResponsiveGrid(
+          isDesktop: isDesktop,
+          isTablet: isTablet,
+          children: [
+            enhancedEventCard(
+              "Desportivos",
+              "assets/images/despo/despo_logo.jpeg",
+              const StudentEventScreen(
+                imageUrl: "assets/images/despo/despo_logo.jpeg",
+                description: "Desportivos is the flagship annual sports festival of LNMIIT...",
+                festHeads: [],
+                galleryImages: [],
+                instaUrl: '',
+                emailUrl: "",
+                youtubeUrl: "",
+                linkedinUrl: "",
+                facebookUrl: "",
+                xUrl: "",
+                label: "Desportivos",
+              ),
+              const Color(0xFF059669),
+              "Sports Festival",
+              isDesktop,
+            ),
+            enhancedEventCard(
+              "TEDX LNMIIT",
+              'assets/images/ted_logo.jpg',
+              const StudentEventScreen(
+                imageUrl: "assets/images/ted_logo.jpg",
+                description: "TEDxLNMIIT brings the global spirit of TED's ideas worth spreading...",
+                festHeads: [],
+                galleryImages: [],
+                instaUrl: '',
+                emailUrl: "",
+                youtubeUrl: "",
+                linkedinUrl: "",
+                facebookUrl: "",
+                xUrl: "",
+                label: "TEDx LNMIIT",
+              ),
+              const Color(0xFFDC2626),
+              "Ideas Worth Spreading",
+              isDesktop,
+            ),
+            enhancedEventCard(
+              "E-Summit",
+              'assets/images/esummit_logo.jpg',
+              const StudentEventScreen(
+                imageUrl: "assets/images/esummit_logo.jpg",
+                description: "E-Summit is LNMIIT Jaipur's flagship celebration of entrepreneurship...",
+                festHeads: [],
+                galleryImages: [],
+                instaUrl: '',
+                emailUrl: "",
+                youtubeUrl: "",
+                linkedinUrl: "",
+                facebookUrl: "",
+                xUrl: "",
+                label: "E-Summit",
+              ),
+              const Color(0xFF7C3AED),
+              "Entrepreneurship",
+              isDesktop,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon, bool isDesktop) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: isDesktop ? 28 : 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResponsiveGrid({
+    required bool isDesktop,
+    required bool isTablet,
+    required List<Widget> children,
+  }) {
+    final crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
+    
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: isDesktop ? 0.85 : 0.8,
+        crossAxisSpacing: isDesktop ? 24 : 16,
+        mainAxisSpacing: isDesktop ? 24 : 16,
+      ),
+      itemCount: children.length,
+      itemBuilder: (context, index) => children[index],
+    );
+  }
+}
+
+Widget enhancedSquareCard(
+  String title,
+  String imageUrl,
+  Widget targetScreen,
+  Color accentColor,
+  String subtitle,
+  bool isDesktop,
+) {
   return Material(
-    elevation: 6,
-    borderRadius: BorderRadius.circular(16.r),
+    elevation: 0,
+    borderRadius: BorderRadius.circular(20),
     child: InkWell(
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(20),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => targetScreen),
-        );
+        // Navigation implementation
       },
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF353F54), Color(0xFF222834)],
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1E293B),
+              const Color(0xFF0F172A),
+            ],
           ),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 2.w),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withOpacity(0.1),
+              blurRadius: 16,
+              spreadRadius: 0,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        width: 157.w,
-        height: 157.h,
-        padding: EdgeInsets.all(8.w),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              backgroundImage: imageProvider,
-              radius: 40.r,
-              backgroundColor: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: accentColor.withOpacity(0.3)),
+              ),
+              child: CircleAvatar(
+                radius: isDesktop ? 32 : 28,
+                backgroundImage: AssetImage(imageUrl),
+                backgroundColor: Colors.transparent,
+              ),
             ),
-            SizedBox(height: 8.h),
+            const SizedBox(height: 16),
             Text(
-              label,
+              title,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 16.sp,
+                fontSize: isDesktop ? 16 : 14,
                 fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: accentColor.withOpacity(0.8),
+                fontSize: isDesktop ? 12 : 10,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -381,81 +459,171 @@ Widget squareCard(
   );
 }
 
-Widget buildSectionTitle(String title) {
-  return Container(
-    height: 60.h,
-    width: 380.w,
-    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20.r),
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF353F54), Color(0xFF222834)],
-      ),
-      boxShadow: [
-        const BoxShadow(
-          color: Color.fromARGB(255, 198, 196, 196),
-          offset: Offset(-0.5, -0.5),
-          blurRadius: 1,
+Widget enhancedEventCard(
+  String title,
+  String imageUrl,
+  Widget targetScreen,
+  Color accentColor,
+  String category,
+  bool isDesktop,
+) {
+  return Material(
+    elevation: 0,
+    borderRadius: BorderRadius.circular(20),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        // Navigation implementation
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              accentColor.withOpacity(0.1),
+              accentColor.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
         ),
-        BoxShadow(
-          color: Colors.black.withOpacity(0.7),
-          blurRadius: 12,
-          offset: const Offset(6, 6),
-        ),
-      ],
-    ),
-    child: Center(
-      child: Text(
-        title,
-        textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(
-          color: Colors.white,
-          fontSize: 19.sp,
-          fontWeight: FontWeight.bold,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.event_rounded,
+                color: accentColor,
+                size: isDesktop ? 32 : 28,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: isDesktop ? 16 : 14,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                category,
+                style: GoogleFonts.inter(
+                  color: accentColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
   );
 }
 
-Widget presidentTile(
+Widget enhancedPresidentTile(
   String name,
   String post,
   String phoneUrl,
   String mailUrl,
+  Color accentColor,
+  bool isDesktop,
 ) {
   return Container(
     decoration: BoxDecoration(
-      color: const Color(0xFF1C2834),
-      borderRadius: BorderRadius.circular(12.r),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          const Color(0xFF1E293B),
+          const Color(0xFF0F172A),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: accentColor.withOpacity(0.1),
+          blurRadius: 12,
+          spreadRadius: 0,
+          offset: const Offset(0, 4),
+        ),
+      ],
     ),
-    margin: EdgeInsets.only(bottom: 12.h),
     child: ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-      title: Text(
-        name,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 13.5.sp,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 16,
+        vertical: isDesktop ? 16 : 12,
+      ),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.person_rounded,
+          color: accentColor,
+          size: 24,
         ),
       ),
-      subtitle: Text(
-        post,
-        style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 10.sp),
+      title: Text(
+        name,
+        style: GoogleFonts.poppins(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: isDesktop ? 16 : 14,
+        ),
+      ),
+      subtitle: Container(
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          post,
+          style: GoogleFonts.inter(
+            color: accentColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: const Icon(Icons.phone, color: Colors.greenAccent),
-            onPressed: () => _launchPhone(phoneUrl),
-          ),
-          IconButton(
-            icon: const Icon(Icons.email, color: Colors.lightBlueAccent),
-            onPressed: () => _launchEmail(mailUrl),
+          if (phoneUrl.isNotEmpty)
+            _buildActionButton(
+              Icons.phone_rounded,
+              const Color(0xFF10B981),
+              () => _launchPhone(phoneUrl),
+            ),
+          const SizedBox(width: 8),
+          _buildActionButton(
+            Icons.email_rounded,
+            const Color(0xFF3B82F6),
+            () => _launchEmail(mailUrl),
           ),
         ],
       ),
@@ -463,7 +631,22 @@ Widget presidentTile(
   );
 }
 
-// Launchers
+Widget _buildActionButton(IconData icon, Color color, VoidCallback onTap) {
+  return Material(
+    color: color.withOpacity(0.1),
+    borderRadius: BorderRadius.circular(8),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, color: color, size: 18),
+      ),
+    ),
+  );
+}
+
+// Launcher functions remain the same
 void _launchPhone(String phone) async {
   final Uri uri = Uri.parse('tel:$phone');
   if (await canLaunchUrl(uri)) {

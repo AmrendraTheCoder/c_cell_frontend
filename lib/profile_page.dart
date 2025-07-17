@@ -4,19 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:flutter/services.dart';
 import 'package:login_page/login_page.dart';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:image_picker/image_picker.dart';
-
-
-
-
-const double basePadding = 16;
-const double userDetailFraction = .60;
-const double offset = 0.04;
-const double contentFraction = userDetailFraction - offset;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -25,10 +17,18 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
   File? _profileImagePicked;
-  static const String  _imageKey = 'profile_image_path';
+  static const String _imageKey = 'profile_image_path';
   Uint8List? _webImageBytes;
+
+  // Animation Controllers
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late AnimationController _cardController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late List<Animation<double>> _cardAnimations;
 
   // Student details
   String? roll;
@@ -61,6 +61,62 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadSavedImage();
     email = FirebaseAuth.instance.currentUser?.email;
     if (email != null) extractUsername(email!);
+    
+    // Initialize animation controllers
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _cardController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+
+    // Create staggered card animations
+    _cardAnimations = List.generate(4, (index) {
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _cardController,
+          curve: Interval(
+            index * 0.15,
+            0.4 + (index * 0.15),
+            curve: Curves.easeOutBack,
+          ),
+        ),
+      );
+    });
+
+    // Start animations
+    _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _slideController.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 400), () {
+      _cardController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    _cardController.dispose();
+    super.dispose();
   }
 
   void extractUsername(String email) {
@@ -73,8 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final year = int.tryParse(username.substring(0, 2));
       if (year != null) {
-
-        if(branch == 'dec'||branch == 'dcs'){
+        if (branch == 'dec' || branch == 'dcs') {
           batch = '20$year - 20${year + 5}';
         } else {
           batch = '20$year - 20${year + 4}';
@@ -85,345 +140,529 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadSavedImage() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_imageKey);
-
-    if (saved != null) {
+    final imagePath = prefs.getString(_imageKey);
+    if (imagePath != null) {
       if (kIsWeb) {
-        _webImageBytes = base64Decode(saved);
-        print("🌐 Loaded image for Web");
-      } else if (File(saved).existsSync()) {
-        _profileImagePicked = File(saved);
-        print("📱 Loaded image from path: $saved");
+        final imageBytes = base64Decode(imagePath);
+        setState(() {
+          _webImageBytes = imageBytes;
+        });
+      } else {
+        setState(() {
+          _profileImagePicked = File(imagePath);
+        });
       }
-      setState(() {});
     }
   }
 
-
-
-  Future<void> _profilePicker() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      final prefs = await SharedPreferences.getInstance();
-
       if (kIsWeb) {
-        // On Web: store image as base64 or bytes (here using bytes in memory)
         final bytes = await pickedFile.readAsBytes();
-        _webImageBytes = bytes;
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_imageKey, base64Encode(bytes));
-        print("🌐 Web image picked");
+        setState(() {
+          _webImageBytes = bytes;
+        });
       } else {
-        // On Android/iOS
-        final path = pickedFile.path;
-        _profileImagePicked = File(path);
-        await prefs.setString(_imageKey, path);
-        print("📱 Mobile image picked: $path");
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_imageKey, pickedFile.path);
+        setState(() {
+          _profileImagePicked = File(pickedFile.path);
+        });
       }
-
-      setState(() {}); // To update UI
-    } else {
-      print("❌ No image selected");
     }
   }
 
-
-  Future<void> signOutUser() async {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-
+  Future<void> _signOut() async {
     try {
-      // First sign out from Google
-      await googleSignIn.signOut();
-
-      // Then sign out from Firebase
+      await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
-
-      print("User signed out successfully.");
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
-      print("Error signing out: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error signing out: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final double height = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width >= 1024;
+    final isTablet = size.width >= 768 && size.width < 1024;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF001219),
-      body: SizedBox(
-        width: double.infinity,
-        child: Stack(
-          children: [
-            Container(
-              height: height * userDetailFraction,
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                image: DecorationImage(
-                  image: NetworkImage(
-                      "https://raw.githubusercontent.com/Ronak99/majestic-ui-flutter/refs/heads/master/assets/background-pattern.jpg"),
-                  fit: BoxFit.cover,
+      backgroundColor: const Color(0xFF0A0E27),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 48 : (isTablet ? 32 : 20),
+                  vertical: 24,
                 ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: basePadding),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.black45,
-                                  shape: const CircleBorder(),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                "Profile",
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      ProfileImage(
-                        pickedImage: _profileImagePicked,
-                        webImageBytes: _webImageBytes,
-                        onPressed: _profilePicker,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        FirebaseAuth.instance.currentUser?.displayName ?? 'Avatar',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email ?? 'Avatar',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4,),
-                      Text(
-                        branch?? 'Avatar',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(
-                        height: (height * offset)*3.5,
-                      ),
-                    ],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeaderSection(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 48 : 32),
+                    _buildProfileCard(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 32 : 24),
+                    _buildAcademicInfo(isDesktop, isTablet),
+                    SizedBox(height: isDesktop ? 32 : 24),
+                    _buildActionButtons(isDesktop, isTablet),
+                    const SizedBox(height: 40),
+                  ],
                 ),
               ),
             ),
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                SizedBox(
-                  height: height * contentFraction,
-                  width: MediaQuery.of(context).size.width,
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF0F172A), // Dark slate (deep blue-gray)
-                          Color(0xFF1E293B), // Slightly lighter slate
-                          Color(0xFF334155), // Soft bluish-gray bottom // Coral/orange highlight
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                        width: 2,
-                      ),
-
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 40,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'MY ACCOUNT',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 25,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Email: ${email ?? 'Not Available'}',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Roll No: ${roll ?? 'Not Available'}',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Branch: ${branch ?? 'Not Available'}',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Degree: ${degree ?? 'Not Available'}',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Batch: ${batch ?? 'Not Available'}',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-
-                        const SizedBox(height: 30),
-                        const Divider(
-                          color: Colors.white24, // subtle line for dark background
-                          thickness: 1.5,
-                          indent: 20,
-                          endIndent: 20,
-                        ),
-                        const SizedBox(height: 15),
-
-                        ElevatedButton(onPressed: () async {
-                          await signOutUser();
-                          Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (_) => LoginPage()),
-                          );
-                        },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                            backgroundColor: const Color(0xFF2E3548), // matches gradient tone
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                            shadowColor: Colors.black.withOpacity(0.3),
-                          ),
-                          child: Text(
-                            'Sign-Out',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              letterSpacing: 0.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-
-class ProfileImage extends StatelessWidget {
-  const ProfileImage({
-    super.key,
-    required this.pickedImage,
-    required this.webImageBytes,
-    required this.onPressed,
-  });
-
-  final File? pickedImage;         // For Android/iOS
-  final Uint8List? webImageBytes;  // For Web
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final photoUrl = user?.photoURL ?? '';
-
-    ImageProvider imageProvider;
-
-    if (kIsWeb && webImageBytes != null) {
-      imageProvider = MemoryImage(webImageBytes!);
-    } else if (!kIsWeb && pickedImage != null) {
-      imageProvider = FileImage(pickedImage!);
-    } else if (photoUrl.isNotEmpty) {
-      imageProvider = NetworkImage(photoUrl);
-    } else {
-      imageProvider = const AssetImage('assets/images/profile.png');
-    }
-
-    return Stack(
-      alignment: Alignment.bottomRight,
+  Widget _buildHeaderSection(bool isDesktop, bool isTablet) {
+    return Row(
       children: [
         Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(200),
-            border: Border.all(color: Colors.blueGrey, width: 3),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(200),
-            child: Image(
-              image: imageProvider,
-              width: 200,
-              height: 200,
-              fit: BoxFit.cover,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
             ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.person_rounded,
+            size: 32,
+            color: Colors.white,
           ),
         ),
-        IconButton(
-          onPressed: onPressed,
-          icon: const Icon(Icons.edit, color: Colors.white),
-          tooltip: 'Edit Profile Image',
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.black45,
-            shape: const CircleBorder(),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Profile',
+                style: GoogleFonts.poppins(
+                  fontSize: isDesktop ? 32 : 24,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                'Manage your account and preferences',
+                style: GoogleFonts.inter(
+                  fontSize: isDesktop ? 16 : 14,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileCard(bool isDesktop, bool isTablet) {
+    return AnimatedBuilder(
+      animation: _cardAnimations[0],
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _cardAnimations[0].value,
+          child: Opacity(
+            opacity: _cardAnimations[0].value,
+            child: Container(
+              padding: EdgeInsets.all(isDesktop ? 32 : 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E293B).withOpacity(0.8),
+                    const Color(0xFF334155).withOpacity(0.6),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: isDesktop
+                  ? Row(
+                      children: [
+                        _buildProfileImage(isDesktop),
+                        const SizedBox(width: 32),
+                        Expanded(child: _buildUserInfo(isDesktop)),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _buildProfileImage(isDesktop),
+                        const SizedBox(height: 24),
+                        _buildUserInfo(isDesktop),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileImage(bool isDesktop) {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        width: isDesktop ? 120 : 100,
+        height: isDesktop ? 120 : 100,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3B82F6).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: _getProfileImage(),
+        ),
+      ),
+    );
+  }
+
+  Widget _getProfileImage() {
+    if (kIsWeb && _webImageBytes != null) {
+      return Image.memory(_webImageBytes!, fit: BoxFit.cover);
+    } else if (!kIsWeb && _profileImagePicked != null) {
+      return Image.file(_profileImagePicked!, fit: BoxFit.cover);
+    } else {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+          ),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.camera_alt_rounded,
+            size: 40,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildUserInfo(bool isDesktop) {
+    final user = FirebaseAuth.instance.currentUser;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          user?.displayName ?? 'Student',
+          style: GoogleFonts.poppins(
+            fontSize: isDesktop ? 28 : 24,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (roll != null) ...[
+          _buildInfoRow(Icons.badge_rounded, 'Roll Number', roll!, const Color(0xFF10B981)),
+          const SizedBox(height: 12),
+        ],
+        _buildInfoRow(Icons.email_rounded, 'Email', user?.email ?? 'Not available', const Color(0xFF3B82F6)),
+        const SizedBox(height: 12),
+        _buildInfoRow(Icons.verified_user_rounded, 'Status', 'Verified Student', const Color(0xFF8B5CF6)),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAcademicInfo(bool isDesktop, bool isTablet) {
+    if (branch == null && degree == null && batch == null) return const SizedBox();
+
+    return AnimatedBuilder(
+      animation: _cardAnimations[1],
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _cardAnimations[1].value,
+          child: Opacity(
+            opacity: _cardAnimations[1].value,
+            child: Container(
+              padding: EdgeInsets.all(isDesktop ? 24 : 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E40AF).withOpacity(0.1),
+                    const Color(0xFF3B82F6).withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.school_rounded,
+                          size: 24,
+                          color: Color(0xFF3B82F6),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Academic Information',
+                        style: GoogleFonts.poppins(
+                          fontSize: isDesktop ? 20 : 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  if (degree != null) ...[
+                    _buildAcademicRow('Degree', degree!, Icons.military_tech_rounded),
+                    const SizedBox(height: 16),
+                  ],
+                  if (branch != null) ...[
+                    _buildAcademicRow('Branch', branch!, Icons.engineering_rounded),
+                    const SizedBox(height: 16),
+                  ],
+                  if (batch != null) ...[
+                    _buildAcademicRow('Batch', batch!, Icons.calendar_today_rounded),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAcademicRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF3B82F6)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(bool isDesktop, bool isTablet) {
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: _cardAnimations[2],
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _cardAnimations[2].value,
+              child: Opacity(
+                opacity: _cardAnimations[2].value,
+                child: _buildActionButton(
+                  'Change Profile Picture',
+                  'Update your profile image',
+                  Icons.camera_alt_rounded,
+                  const Color(0xFF10B981),
+                  _pickImage,
+                  isDesktop,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        AnimatedBuilder(
+          animation: _cardAnimations[3],
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _cardAnimations[3].value,
+              child: Opacity(
+                opacity: _cardAnimations[3].value,
+                child: _buildActionButton(
+                  'Sign Out',
+                  'Logout from your account',
+                  Icons.logout_rounded,
+                  const Color(0xFFEF4444),
+                  _signOut,
+                  isDesktop,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+    bool isDesktop,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: EdgeInsets.all(isDesktop ? 20 : 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.1),
+              color.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: isDesktop ? 16 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: color,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

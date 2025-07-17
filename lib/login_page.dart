@@ -31,7 +31,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _initializeAnimations();
-    _startAnimations();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startAnimations();
+      }
+    });
   }
 
   void _initializeAnimations() {

@@ -96,22 +96,30 @@ class _ResponsiveHomeDashboardState extends State<ResponsiveHomeDashboard>
       ),
     );
 
-    // Start animations
-    _welcomeAnimationController.forward();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _cardAnimationController.forward();
-      // Start stats animations
-      for (int i = 0; i < _statsControllers.length; i++) {
-        Future.delayed(Duration(milliseconds: i * 100), () {
-          if (mounted) _statsControllers[i].forward();
-        });
-      }
-      // Start services animations
-      for (int i = 0; i < _cardControllers.length; i++) {
-        Future.delayed(Duration(milliseconds: 500 + (i * 100)), () {
-          if (mounted) _cardControllers[i].forward();
-        });
-      }
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _welcomeAnimationController.forward();
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              _cardAnimationController.forward();
+              // Start stats animations
+              for (int i = 0; i < _statsControllers.length; i++) {
+                Future.delayed(Duration(milliseconds: i * 100), () {
+                  if (mounted) _statsControllers[i].forward();
+                });
+              }
+              // Start services animations
+              for (int i = 0; i < _cardControllers.length; i++) {
+                Future.delayed(Duration(milliseconds: 500 + (i * 100)), () {
+                  if (mounted) _cardControllers[i].forward();
+                });
+              }
+            }
+          });
+        }
+      });
     });
   }
 

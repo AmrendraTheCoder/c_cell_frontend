@@ -54,13 +54,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    // Start animations
-    _fadeController.forward();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _slideController.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 600), () {
-      _scaleController.forward();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _fadeController.forward();
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) _slideController.forward();
+          });
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) _scaleController.forward();
+          });
+        }
+      });
     });
   }
 

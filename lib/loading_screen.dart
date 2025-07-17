@@ -33,12 +33,12 @@ class _LoadingScreenState extends State<LoadingScreen>
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
     
     _rotationController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
-    )..repeat();
+    );
     
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -57,8 +57,15 @@ class _LoadingScreenState extends State<LoadingScreen>
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    _scaleController.forward();
-    _startLoading();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _pulseController.repeat(reverse: true);
+        _rotationController.repeat();
+        _scaleController.forward();
+        _startLoading();
+      }
+    });
   }
 
   @override

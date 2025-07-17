@@ -327,7 +327,7 @@ class _GuestDashboardState extends State<GuestDashboard>
               const Color(0xFFF59E0B),
               () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               ),
               isDesktop,
             ),
@@ -585,7 +585,7 @@ class _GuestDashboardState extends State<GuestDashboard>
                 child: ElevatedButton.icon(
                   onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   ),
                   icon: const Icon(Icons.login_rounded),
                   label: const Text('Sign In Now'),

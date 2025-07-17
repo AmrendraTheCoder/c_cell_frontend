@@ -183,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       await FirebaseAuth.instance.signOut();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
         (Route<dynamic> route) => false,
       );
     } catch (e) {

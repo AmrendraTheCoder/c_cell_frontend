@@ -342,10 +342,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
           ),
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoginPage()),
-            );
+                                    Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
           },
           isDesktop: isDesktop,
         ),

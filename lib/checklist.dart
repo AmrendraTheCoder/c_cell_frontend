@@ -611,7 +611,7 @@ class _ChecklistScreenState extends State<ChecklistScreen>
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
                     );
                   },
                   icon: const Icon(Icons.login_rounded),

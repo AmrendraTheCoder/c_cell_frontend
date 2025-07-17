@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
-import 'dart:io';
 
 class CurriculumPage extends StatelessWidget {
   const CurriculumPage({super.key});

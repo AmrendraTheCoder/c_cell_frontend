@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:login_page/main.dart';
-import 'home_page.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key, required this.userName});

@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:login_page/login_page.dart';
 import 'package:login_page/more_page.dart';
 import 'package:login_page/home_page.dart';
-import 'package:login_page/notifications_api/notification_state.dart';
+
 import 'package:login_page/notifications_screen.dart';
 import 'package:login_page/profile_page.dart';
 import 'package:login_page/welcome_screen.dart';

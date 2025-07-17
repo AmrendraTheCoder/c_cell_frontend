@@ -1,13 +1,8 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:login_page/google_sign_in.dart';
 import 'package:login_page/welcome_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'notifications_api/notification_state.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -55,30 +50,30 @@ class LoginPage extends StatelessWidget {
                         alignment: Alignment.topCenter,
                         child: Image.asset(
                           'assets/images/ccell_logo_dark.png',
-                          height: 300.h,
+                          height: 300,
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 10),
                 Text(
                   'WELCOME!',
                   style: GoogleFonts.lilitaOne(
-                    fontSize: 30.sp,
+                    fontSize: 30,
                     fontWeight: FontWeight.normal,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 20),
                 SizedBox(
-                  width: 300.w,
+                  width: 300,
                   child: Material(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(45.r),
+                    borderRadius: BorderRadius.circular(45),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(45.r),
+                      borderRadius: BorderRadius.circular(45),
                       onTap: () {
                         signInWithCollegeGoogleAccount(context);
                       },
@@ -89,12 +84,12 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 30.h),
+                SizedBox(height: 30),
                 Text("Only use your College ID to Sign in",
                     style: GoogleFonts.inter(
                       color: Colors.white
                     )),
-                SizedBox(height: 90.h),
+                SizedBox(height: 90),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 0, 18, 25),
@@ -185,7 +180,7 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 10),
               ],
             ),
           ),

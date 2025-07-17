@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/impContacts.dart';
 import 'pages/hods.dart';
@@ -53,7 +52,7 @@ class _LNMPageState extends State<LNMPage> with TickerProviderStateMixin {
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
 
     // Create staggered card animations
-    _cardAnimations = List.generate(6, (index) {
+    _cardAnimations = List.generate(7, (index) {
       return Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: _cardController,

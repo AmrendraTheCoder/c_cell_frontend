@@ -32,7 +32,15 @@ class _NotificationsPageState extends State<NotificationsPage>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _listAnimationController.forward();
+    
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _listAnimationController.forward();
+        }
+      });
+    });
   }
 
   @override

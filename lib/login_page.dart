@@ -101,6 +101,8 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       },
       child: Scaffold(
         body: Container(
+          height: screenSize.height,
+          width: screenSize.width,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -133,49 +135,82 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   Widget _buildDesktopLayout(Size screenSize) {
-    return Row(
-      children: [
-        // Left side - Branding
-        Expanded(
-          flex: 5,
-          child: _buildBrandingSection(screenSize, true),
-        ),
-        // Right side - Login Form
-        Expanded(
-          flex: 4,
-          child: Container(
-            padding: const EdgeInsets.all(60),
-            child: _buildLoginCard(screenSize, true),
+    return SizedBox(
+      height: screenSize.height,
+      width: screenSize.width,
+      child: Row(
+        children: [
+          // Left side - Branding
+          Expanded(
+            flex: 5,
+            child: SizedBox(
+              height: screenSize.height,
+              child: _buildBrandingSection(screenSize, true),
+            ),
           ),
-        ),
-      ],
+          // Right side - Login Form
+          Expanded(
+            flex: 4,
+            child: Container(
+              height: screenSize.height,
+              padding: const EdgeInsets.all(60),
+              child: Center(
+                child: _buildLoginCard(screenSize, true),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildTabletLayout(Size screenSize) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-        child: Column(
-          children: [
-            _buildBrandingSection(screenSize, false),
-            const SizedBox(height: 40),
-            _buildLoginCard(screenSize, false),
-          ],
+    return SizedBox(
+      height: screenSize.height,
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: screenSize.height,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildBrandingSection(screenSize, false),
+                const SizedBox(height: 40),
+                _buildLoginCard(screenSize, false),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildMobileLayout(Size screenSize) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        children: [
-          _buildBrandingSection(screenSize, false),
-          const SizedBox(height: 30),
-          _buildLoginCard(screenSize, false),
-        ],
+    return SizedBox(
+      height: screenSize.height,
+      width: screenSize.width,
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: screenSize.height,
+            minWidth: screenSize.width,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildBrandingSection(screenSize, false),
+                const SizedBox(height: 30),
+                _buildLoginCard(screenSize, false),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -252,7 +252,7 @@ class _BiometricScreenState extends State<BiometricScreen>
                             ),
                           ),
                           Text(
-                            'बायोमेट्रिक पंजीकरण',
+                            'Biometric Registration',
                             style: GoogleFonts.inter(
                               fontSize: isDesktop ? 16 : 14,
                               color: Colors.white.withOpacity(0.8),

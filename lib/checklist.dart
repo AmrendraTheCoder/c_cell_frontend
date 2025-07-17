@@ -103,7 +103,15 @@ class _ChecklistScreenState extends State<ChecklistScreen>
     );
 
     _loadChecklist();
-    _fadeController.forward();
+    
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _fadeController.forward();
+        }
+      });
+    });
   }
 
   @override

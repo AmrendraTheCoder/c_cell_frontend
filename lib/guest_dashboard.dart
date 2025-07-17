@@ -44,8 +44,15 @@ class _GuestDashboardState extends State<GuestDashboard>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
 
-    _fadeController.forward();
-    _slideController.forward();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _fadeController.forward();
+          _slideController.forward();
+        }
+      });
+    });
   }
 
   @override

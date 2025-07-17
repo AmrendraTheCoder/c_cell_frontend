@@ -71,11 +71,15 @@ class _MorePageState extends State<MorePage> with TickerProviderStateMixin {
       );
     });
 
-    // Start animations after loading check
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _fadeController.forward();
-      _slideController.forward();
-      _cardController.forward();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _fadeController.forward();
+          _slideController.forward();
+          _cardController.forward();
+        }
+      });
     });
   }
 

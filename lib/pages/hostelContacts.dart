@@ -60,13 +60,19 @@ class _HostelPageState extends State<HostelPage> with TickerProviderStateMixin {
       );
     });
 
-    // Start animations
-    _fadeController.forward();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _slideController.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _listController.forward();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _fadeController.forward();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) _slideController.forward();
+          });
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted) _listController.forward();
+          });
+        }
+      });
     });
   }
 
@@ -175,7 +181,7 @@ class _HostelPageState extends State<HostelPage> with TickerProviderStateMixin {
                             ),
                           ),
                           Text(
-                            'हॉस्टल संपर्क जानकारी',
+                            'Hostel Contact Information',
                             style: GoogleFonts.inter(
                               fontSize: isDesktop ? 16 : 14,
                               color: Colors.white.withOpacity(0.8),
@@ -255,7 +261,7 @@ class _HostelPageState extends State<HostelPage> with TickerProviderStateMixin {
     final sections = [
       {
         'title': 'ADMINISTRATION',
-        'subtitle': 'प्रशासनिक संपर्क',
+        'subtitle': 'Administrative Contacts',
         'icon': Icons.business_rounded,
         'color': const Color(0xFF10B981),
         'contacts': [

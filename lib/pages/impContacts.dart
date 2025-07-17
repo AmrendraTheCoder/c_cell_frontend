@@ -61,13 +61,19 @@ class _ImportantContactsPageState extends State<ImportantContactsPage>
       );
     });
 
-    // Start animations
-    _fadeController.forward();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _slideController.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _listController.forward();
+    // Start animations with proper timing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _fadeController.forward();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) _slideController.forward();
+          });
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted) _listController.forward();
+          });
+        }
+      });
     });
   }
 
@@ -176,7 +182,7 @@ class _ImportantContactsPageState extends State<ImportantContactsPage>
                             ),
                           ),
                           Text(
-                            'महत्वपूर्ण संपर्क व्यक्ति',
+                            'Important Contact Persons',
                             style: GoogleFonts.inter(
                               fontSize: isDesktop ? 16 : 14,
                               color: Colors.white.withOpacity(0.8),
@@ -336,8 +342,8 @@ class _ImportantContactsPageState extends State<ImportantContactsPage>
         widgets.add(_buildSectionHeader(
           entry.key == 'Emergency' ? 'Emergency Contacts' :
           entry.key == 'High' ? 'Senior Administration' : 'Academic Support',
-          entry.key == 'Emergency' ? 'आपातकालीन संपर्क' :
-          entry.key == 'High' ? 'वरिष्ठ प्रशासन' : 'शैक्षणिक सहायता',
+          entry.key == 'Emergency' ? 'Emergency Contacts' :
+          entry.key == 'High' ? 'Senior Administration' : 'Academic Support',
           priorityInfo['icon'] as IconData,
           priorityInfo['color'] as Color,
           isDesktop,
